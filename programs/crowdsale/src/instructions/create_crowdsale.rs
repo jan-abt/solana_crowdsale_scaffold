@@ -12,6 +12,14 @@ use crate::{
     errors::CrowdsaleError,  // Import for direct access (avoids crate:: prefix)
 };
 
+/**
+ * A crowdsale is a fundraising event where a blockchain project or startup sells newly created tokens or coins
+ * directly to the public to raise capital, typically in exchange for established cryptocurrencies (like ETH or BTC)
+ * or fiat. It's often structured as a limited-time sale with fixed or tiered pricing, and it's commonly associated
+ * with Initial Coin Offerings (ICOs) or token launches. This is akin to a primary market sale, where the issuer
+ * (project) directly distributes assets to buyers, often via smart contracts on platforms like Ethereum.
+ * It's not an ongoing marketplace but a one-off or phased event focused on bootstrapping funds for development.
+ */
 /// Accounts struct for creating a crowdsale.
 #[derive(Accounts)]
 #[instruction(id: Pubkey)]
