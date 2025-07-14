@@ -28,4 +28,31 @@ describe("Crowdsale", () => {
   console.log(`Creator Public Key: ${creator.publicKey}`)
   console.log(`Crowdsale Public Key: ${crowdsaleKeypair.publicKey}`)
   console.log(`Buyer Public Key: ${buyerKeypair.publicKey}\n`)
+
+  const ID = crowdsaleKeypair.publicKey
+  const COST = 1
+
+  // Set up the crowdsale authority.
+  // In order to transfer tokens, we need to create the authoriy of the crowdsale.
+  // It will be based off the ID of the crowdsale keypair's public key, hence PDA (Program Derived Address)
+  const crowdsalePDA = PublicKey.findProgramAddressSync(
+    [ID.toBuffer()],
+    anchor.workspace.Crowdsale.programId
+  )[0]
+
+  const crowdsaleAuthorityPDA = PublicKey.findProgramAddressSync(
+    [ID.toBuffer()], //'authority',
+    anchor.workspace.Crowdsale.programId
+  )[0]
+
+  console.log(`Crowdsale Key: ${crowdsalePDA}\n`)
+  console.log(`Crowdsale Authority: ${crowdsaleAuthorityPDA}\n`)
+
+  let mintKeypair, crowdsaleTokenAccount
+
+  before(async () => {
+
+  })
+
+
 });

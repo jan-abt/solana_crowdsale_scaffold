@@ -1,5 +1,29 @@
 # Solana Crowdsale 
 
+## Project Overview
+This is a Solana program built with Anchor (version 0.31.1) for a crowdsale (or token sale/ITO), <br>
+allowing initialization of a crowdsale with a fixed token price, <br>
+buying tokens in exchange for SOL and withdrawing excess funds by the owner.<br>
+It uses SPL tokens for the token vault and PDA for authority control.<br>
+The structure is modular, with separate files for state, errors, constants, and instructions.<br>
+
+
+## Key components:
+
+* `constants.rs`: Defines PDA seed.
+* `lib.rs`: Program entry, declaring ID and instructions.
+* `mod.rs`: Exports instruction submodules.
+* `create_crowdsale.rs`: Initialize the crowdsale.
+* `buy_tokens.rs`: Buy tokens with SOL.
+* `withdraw_funds.rs`: Withdraw excess SOL from crowdsale account.
+* `errors.rs`: Custom error enum.
+* `state.rs`: Crowdsale account and status enum.
+
+
+
+
+
+
 ## Technology Stack & Tools
 - Typescript (Unit testing)
 - [Rust](https://www.rust-lang.org/tools/install) (Language for Solana programs)
