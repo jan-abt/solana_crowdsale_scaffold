@@ -1,10 +1,8 @@
-use anchor_lang::solana_program::example_mocks::solana_sdk::system_instruction;
-
 use {
     anchor_lang::prelude::*,
     anchor_spl::{
         associated_token::AssociatedToken,
-        token::{transfer, Mint, Token, TokenAccount, Transfer},
+        token::{Mint, Token, TokenAccount, Transfer, transfer},
     },
 };
 
@@ -57,7 +55,9 @@ pub struct BuyTokens<'info> {
     #[account(mut)]
     pub mint_account: Account<'info, Mint>,
 
-    /// CHECK: This is the crowdsale owner's account for receiving payments. It's validated by the `address = crowdsale.owner` constraint, ensuring it matches the stored owner key—no further type checks or deserialization needed as it's just for lamport transfers.
+    /// CHECK: This is the crowdsale owner's account for receiving payments. 
+    /// It's validated by the `address = crowdsale.owner` constraint, 
+    /// ensuring it matches the stored owner key—no further type checks or deserialization needed as it's just for lamport transfers.
     #[account(
         mut,
         address = crowdsale.owner
@@ -74,7 +74,6 @@ impl<'info> BuyTokens<'info> {
     pub fn handler(ctx: Context<BuyTokens>, amount: u32) -> Result<()> {
         
         let crowdsale = &mut ctx.accounts.crowdsale;
-        
         require_eq!(
             crowdsale.status,
             CrowdsaleStatus::Open,
@@ -135,48 +134,5 @@ impl<'info> BuyTokens<'info> {
         Ok(())
     }
 
-    pub fn handler_deprecated(ctx: Context<BuyTokens>, amount: u32) -> Result<()> {
-        // calculate the amount of SOL needed to buy n number of token x, in lamport
-        let amount_of_lamports = (amount * ctx.accounts.crowdsale.cost) as u64;
-
-        let from = &ctx.accounts.buyer;
-        let to = &ctx.accounts.crowdsale;
-
-        let transfer_intstruction =
-            system_instruction::transfer(&from.key(), &to.key(), amount_of_lamports);
-
-        anchor_lang::solana_program::program::invoke_signed(
-            &transfer_intstruction,
-            &[
-                from.to_account_info(),
-                to.to_account_info().clone(),
-                ctx.accounts.system_program.to_account_info(),
-            ],
-            &[],
-        )?;
-
-        let authority_seeds = &[
-            &ctx.accounts.crowdsale.id.to_bytes(),
-            AUTHORITY_SEED,
-            &[ctx.bumps.crowdsale_authority],
-        ];
-        let signer_seeds = &[&authority_seeds[..]];
-
-        transfer(
-            CpiContext::new_with_signer(
-                ctx.accounts.token_program.to_account_info(),
-                Transfer {
-                    from: ctx.accounts.crowdsale_token_account.to_account_info(),
-                    to: ctx.accounts.buyer_token_account.to_account_info(),
-                    authority: ctx.accounts.crowdsale_authority.to_account_info(),
-                },
-                signer_seeds,
-            ),
-            amount as u64,
-        )?;
-
-        msg!("Token transfered");
-        Ok(())
-    }
-
+    
 }

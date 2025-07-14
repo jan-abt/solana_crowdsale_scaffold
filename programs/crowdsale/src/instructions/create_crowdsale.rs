@@ -13,13 +13,13 @@ use crate::{
 };
 
 /**
- * A crowdsale is a fundraising event where a blockchain project or startup sells newly created tokens or coins
- * directly to the public to raise capital, typically in exchange for established cryptocurrencies (like ETH or BTC)
- * or fiat. It's often structured as a limited-time sale with fixed or tiered pricing, and it's commonly associated
- * with Initial Coin Offerings (ICOs) or token launches. This is akin to a primary market sale, where the issuer
- * (project) directly distributes assets to buyers, often via smart contracts on platforms like Ethereum.
- * It's not an ongoing marketplace but a one-off or phased event focused on bootstrapping funds for development.
+   A Crowdsale or Initial Token Offering (ITO) is commonly used in blockchain and cryptocurrency contexts to describe a 
+   mechanism where a project sells newly created tokens to raise funds, often via a smart contract, as here in this Solana/Anchor code, 
+   This code handles opening the store,  token distribution at a fixed cost, buying, and withdrawal.
  */
+
+
+
 /// Accounts struct for creating a crowdsale.
 #[derive(Accounts)]
 #[instruction(id: Pubkey)]
@@ -62,7 +62,7 @@ pub struct CreateCrowdSale<'info>{
 
 impl<'info> CreateCrowdSale<'info> {
     /// Initializes a new crowdsale from the context with the given ID and cost.
-    pub fn do_init(ctx: Context<CreateCrowdSale>, id: Pubkey, cost: u32) -> Result<()> {
+    pub fn handler(ctx: Context<CreateCrowdSale>, id: Pubkey, cost: u32) -> Result<()> {
         require!(cost > 0, CrowdsaleError::InvalidCost);
         let crowdsale_account = &mut ctx.accounts.crowdsale;
         let token_account = &ctx.accounts.token_account;
