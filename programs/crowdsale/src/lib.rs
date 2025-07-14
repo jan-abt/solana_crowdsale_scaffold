@@ -3,6 +3,7 @@
 use anchor_lang::prelude::*;
 
 mod constants;
+mod errors;  // Ensures ErrorCode is available at crate root
 mod instructions;
 mod state;
 
@@ -14,12 +15,10 @@ declare_id!("HciPz9qoNEBBWga6KWomnDovANbQWnTAT5iFSNW7Ji3K");
 
 #[program]
 pub mod crowdsale {
-    use super::{Context, CreateCrowdSale, Pubkey, Result, do_init};
+    use super::{Context, CreateCrowdSale, Pubkey, Result};
 
+    /// Initializes a new crowdsale with the given ID and cost.
     pub fn initialize(ctx: Context<CreateCrowdSale>, id: Pubkey, cost: u32) -> Result<()> {
-        do_init(ctx, id, cost)          
+        CreateCrowdSale::do_init(ctx, id, cost)
     }
 }
-
-#[derive(Accounts)]
-pub struct Initialize {}

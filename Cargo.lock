@@ -538,7 +538,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "crowdale"
+name = "crowdsale"
 version = "0.1.0"
 dependencies = [
  "anchor-lang",

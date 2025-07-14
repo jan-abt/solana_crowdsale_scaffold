@@ -1,6 +1,6 @@
-
 use anchor_lang::prelude::*;
 
+/// Represents a crowdsale account, storing configuration and state for token sales.
 #[account]
 pub struct Crowdsale {
     pub id: Pubkey,              // 32 bytes
@@ -14,12 +14,15 @@ pub struct Crowdsale {
 impl Crowdsale {
     // Solana accounts need a fixed rent exempt space, allocated upfront
     // Pubkey u32 Pubkey Pubkey CrowdsaleStatus Pubkey
-    pub const MAXIMUM_SIZE: usize = 32 + 4 + 32 + 32 + 1 + 32;
+    // Added 32 bytes padding for future expansions without migrations
+    pub const MAXIMUM_SIZE: usize = 32 + 4 + 32 + 32 + 1 + 32 + 32;
 }
 
-// deserialize/serialize enum  bytes
+/// Represents the status of a crowdsale.
 #[derive(AnchorSerialize, AnchorDeserialize, Clone, PartialEq, Eq)]
 pub enum CrowdsaleStatus {
+    /// The crowdsale is active and accepting purchases.
     Open,
+    /// The crowdsale is inactive.
     Closed,
 }

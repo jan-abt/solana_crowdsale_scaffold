@@ -9,24 +9,10 @@ use {
 use crate::{
     constants::AUTHORITY_SEED,
     state::{Crowdsale, CrowdsaleStatus},
+    errors::CrowdsaleError,  // Import for direct access (avoids crate:: prefix)
 };
 
-// Initializes a new crowdsale from the context with the given ID and cost.
-pub fn do_init(ctx: Context<CreateCrowdSale>, id: Pubkey, cost: u32) -> Result<()> {
-    
-    let crowdsale = &mut ctx.accounts.crowdsale;
-    crowdsale.id = id;
-    crowdsale.cost = cost;
-    crowdsale.mint_account = ctx.accounts.mint_account.key();
-    crowdsale.token_account = ctx.accounts.token_account.key();
-    crowdsale.status = CrowdsaleStatus::Open;
-    crowdsale.owner = ctx.accounts.creator.key();
-
-    msg!("Crowdsale created!");  
-
-    Ok(())
-}
-
+/// Accounts struct for creating a crowdsale.
 #[derive(Accounts)]
 #[instruction(id: Pubkey)]
 pub struct CreateCrowdSale<'info>{
@@ -48,6 +34,8 @@ pub struct CreateCrowdSale<'info>{
         associated_token::authority = crowdsale_authority,
     )]
     pub token_account: Account<'info, TokenAccount>,
+    /// CHECK: This account is a program-derived address (PDA) used as the authority for the token account.
+    /// It is derived deterministically from the crowdsale ID and seed, so no type checks or deserialization are needed—it's controlled solely by the program.
     #[account(
         seeds = [
             id.as_ref(),
@@ -64,3 +52,24 @@ pub struct CreateCrowdSale<'info>{
     pub system_program: Program<'info, System>,
 }
 
+impl<'info> CreateCrowdSale<'info> {
+    /// Initializes a new crowdsale from the context with the given ID and cost.
+    pub fn do_init(ctx: Context<CreateCrowdSale>, id: Pubkey, cost: u32) -> Result<()> {
+        require!(cost > 0, CrowdsaleError::InvalidCost);
+        let crowdsale_account = &mut ctx.accounts.crowdsale;
+        let token_account = &ctx.accounts.token_account;
+        let mint_account = &ctx.accounts.mint_account;
+        require_keys_eq!(token_account.mint, mint_account.key(), CrowdsaleError::MintMismatch);
+
+        crowdsale_account.id = id;
+        crowdsale_account.cost = cost;
+        crowdsale_account.mint_account = mint_account.key();
+        crowdsale_account.token_account = token_account.key();
+        crowdsale_account.status = CrowdsaleStatus::Open;
+        crowdsale_account.owner = ctx.accounts.creator.key();
+
+        msg!("Crowdsale created!");  
+
+        Ok(())
+    }
+}
