@@ -1,18 +1,39 @@
 {
   "compilerOptions": {
+    "target": "ES2020",
+    "module": "commonjs", // Switch to CommonJS to avoid ESM issues
+    "lib": [
+      "ES2020",
+      "DOM"
+    ],
+    "moduleResolution": "node",
+    "esModuleInterop": true,
+    "resolveJsonModule": true,
+    "allowSyntheticDefaultImports": true,
+    "strict": true,
     "types": [
       "mocha",
-      "chai"
+      "chai",
+      "node"
     ],
     "typeRoots": [
-      "./node_modules/@types"
+      "./node_modules/@types",
+      "./target/types"
     ],
-    "lib": [
-      "es2015"
-    ],
-    "module": "commonjs",
-    "target": "es6",
-    "esModuleInterop": true,
-    "resolveJsonModule": true
-  }
+    "paths": {
+      "@solana/web3.js": ["./node_modules/@solana/web3.js"],
+      "@coral-xyz/anchor": ["./node_modules/@coral-xyz/anchor"]
+    },
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "allowJs": true, // Allow JS files if needed
+    "experimentalDecorators": true // For Anchor decorators if used
+  },
+  "include": [
+    "./tests/**/*.ts"
+  ],
+  "exclude": [
+    "node_modules",
+    "target"
+  ]
 }

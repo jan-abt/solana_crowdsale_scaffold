@@ -43,14 +43,13 @@ export async function mintTokens({
     connection,
     creator,
     mintKeypair,
-    tokenAccount,
+    tokenAccount, // Changed to PublicKey
     amount
-
 }: {
     connection: Connection,
     creator: Signer,
     mintKeypair: Keypair,
-    tokenAccount: Keypair,
+    tokenAccount: PublicKey, // Fix: ATAs are PublicKey, not Keypair
     amount: number
 }) {
 
@@ -60,11 +59,12 @@ export async function mintTokens({
         connection,
         creator,
         mintKeypair.publicKey,
-        tokenAccount.publicKey,
+        tokenAccount, // No .publicKey needed
         mintAuthority,
-        amount)
+        amount
+    )
 
-    console.log(`Minted ${amount / 10 ** 9} Tokens to ${tokenAccount.publicKey}`)
+    console.log(`Minted ${amount / 10 ** 9} Tokens to ${tokenAccount}`)
 }
 
 export async function transferLamports({
