@@ -6,6 +6,7 @@ import { Crowdsale } from "../target/types/crowdsale";
 import { transferLamports, createMintAccount, mintTokens } from "./_helpers";
 
 describe("Crowdsale", () => {
+
   // Configure the client to use the local cluster.
   const provider = anchor.AnchorProvider.env();
   const connection = provider.connection;
@@ -14,21 +15,15 @@ describe("Crowdsale", () => {
   // Our overall program
   const program = anchor.workspace.Crowdsale as anchor.Program<Crowdsale>;
 
-  // Our main account.
-  // This is who will create the token mint, crowdsale, and fund the buyer account with SOL
+  // Main account.
+  // It will issue the token mint, crowdsale, and fund the buyer account with SOL
   const creator = (program.provider as anchor.AnchorProvider).wallet;
 
-  /* --- GENERATE KEYPAIRS --- */
   // Create Crowdsale keypair
   const crowdsaleKeypair = anchor.web3.Keypair.generate();
 
   // Create the buyer keypair
   const buyerKeypair = anchor.web3.Keypair.generate();
-
-  // Console log our keys
-  console.log(`Creator Public Key: ${creator.publicKey}`);
-  console.log(`Crowdsale Public Key: ${crowdsaleKeypair.publicKey}`);
-  console.log(`Buyer Public Key: ${buyerKeypair.publicKey}\n`);
 
   // set up crowdsale params
   // we'll use the crowsdale keypair's public key as the ID and set
@@ -38,8 +33,8 @@ describe("Crowdsale", () => {
 
   // Set up the crowdsale authority.
   // In order to transfer tokens, we need to create the authoriy of the crowdsale.
-  // It will be based off the ID of the crowdsale keypair's public key, 
-  // hence PDA (Program Derived Address)
+  // It will be based off the ID of the crowdsale keypair's public keyy.
+  // Hence, PDA (Program Derived Address)
   // Set up the crowdsale PDA (seeds: [ID])
   const crowdsalePDA = PublicKey.findProgramAddressSync(
     [ID.toBuffer()],
@@ -52,18 +47,15 @@ describe("Crowdsale", () => {
     anchor.workspace.Crowdsale.programId
   )[0];
 
-  console.log(`Crowdsale Key: ${crowdsalePDA}\n`);
-  console.log(`Crowdsale Authority: ${crowdsaleAuthorityPDA}\n`);
-
   let mintKeypair, crowdsaleTokenAccount, buyerTokenAccount;
 
   before(async () => {
     try {
 
-       if (!creator.payer) {
+      if (!creator.payer) {
         throw new Error('Payer keypair is undefined - check wallet config');
       }
-      
+
       // Create mint account
       mintKeypair = await createMintAccount({
         connection,
@@ -71,23 +63,30 @@ describe("Crowdsale", () => {
         decimals: 9,
       });
 
+
+      console.log('\n\tAccounts:');
+      console.log(`\t\tCreator: ${creator.publicKey}`);
+      console.log(`\t\tCrowdsale: ${crowdsaleKeypair.publicKey}`);
+      console.log(`\t\tBuyer: ${buyerKeypair.publicKey}`);
+
       // Derive token_account (vault ATA) before initialize
       const tokenAccount = getAssociatedTokenAddressSync(
         mintKeypair.publicKey,
         crowdsaleAuthorityPDA,
         true // Allow off-curve for PDA
       );
-
-      // Debug: Log all accounts before call
-      console.log('Accounts for initialize:');
-      console.log('crowdsale: ', crowdsalePDA.toBase58());
-      console.log('mintAccount: ', mintKeypair.publicKey.toBase58());
-      console.log('tokenAccount: ', tokenAccount.toBase58());
-      console.log('crowdsaleAuthority: ', crowdsaleAuthorityPDA.toBase58());
-      console.log('creator: ', creator.publicKey.toBase58());
-      console.log('tokenProgram: ', TOKEN_PROGRAM_ID.toBase58());
-      console.log('associatedTokenProgram: ', ASSOCIATED_TOKEN_PROGRAM_ID.toBase58());
-      console.log('systemProgram: ', SystemProgram.programId.toBase58());
+      
+      console.log('\n\tAccounts required for initialize():');
+      console.log('\t\tcreator: ', creator.publicKey.toBase58());
+      console.log('\t\tcrowdsalePDA: ', crowdsalePDA.toBase58());
+      console.log('\t\tcrowdsaleAuthorityPDA: ', crowdsaleAuthorityPDA.toBase58());
+      console.log('\t\tmintAccount: ', mintKeypair.publicKey.toBase58());
+      console.log('\t\ttokenAccount: ', tokenAccount.toBase58(),"\n");
+      
+      console.log('\n\tProgram Ids:');
+      console.log('\t\ttokenProgram: ', TOKEN_PROGRAM_ID.toBase58());
+      console.log('\t\tassociatedTokenProgram: ', ASSOCIATED_TOKEN_PROGRAM_ID.toBase58());
+      console.log('\t\tsystemProgram: ', SystemProgram.programId.toBase58(), '\n');
 
       // Call initialize with ALL required accounts
       await program.methods
@@ -142,7 +141,12 @@ describe("Crowdsale", () => {
       const crowdsaleState = await program.account.crowdsale.fetch(crowdsalePDA);
       expect(crowdsaleState.id.toBase58()).to.equal(ID.toBase58());
       expect(crowdsaleState.cost).to.equal(COST);
-      // Add other expects for mintAccount, status, etc.
+      expect(crowdsaleState.status).to.have.property('open');
+    });
+
+    it("Has tokens", async () => {
+      const crowdsaleTokenBalance = await connection.getTokenAccountBalance(crowdsaleTokenAccount);
+      expect(crowdsaleTokenBalance.value.amount).to.equal("1000000000000");
     });
   });
 

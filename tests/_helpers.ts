@@ -24,7 +24,7 @@ export async function createMintAccount({
 
     const mintKeypair = Keypair.generate()
 
-    const mint = await createMint(
+    await createMint(
         connection, // Connection to the block chain
         creator, // who is paying for the transaction
         creator.publicKey, // who is allowed to mint - mint authority
@@ -32,11 +32,7 @@ export async function createMintAccount({
         decimals,
         mintKeypair
     )
-
-    const mintId = mint.toBase58()
-    console.log(`Created Mint Account: ${mintId}`)
     return mintKeypair
-
 }
 
 export async function mintTokens({
@@ -64,7 +60,7 @@ export async function mintTokens({
         amount
     )
 
-    console.log(`Minted ${amount / 10 ** 9} Tokens to ${tokenAccount}`)
+    console.log(`\tMinted ${amount / 10 ** 9} Tokens to ${tokenAccount}`)
 }
 
 export async function transferLamports({
@@ -92,5 +88,5 @@ export async function transferLamports({
         [from],
     )
 
-    console.log(`Sent ${amount / 10 ** 9} SOL to ${to.publicKey}\n`)
+    console.log(`\tSent ${amount / 10 ** 9} SOL to ${to.publicKey}\n`)
 }
