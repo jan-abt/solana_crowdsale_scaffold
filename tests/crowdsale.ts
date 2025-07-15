@@ -2,6 +2,9 @@ import * as anchor from "@coral-xyz/anchor";
 import { Keypair, PublicKey, SystemProgram, Transaction } from '@solana/web3.js';
 import { createAssociatedTokenAccountInstruction, getAssociatedTokenAddressSync, TOKEN_PROGRAM_ID, ASSOCIATED_TOKEN_PROGRAM_ID } from '@solana/spl-token';
 import { expect } from 'chai';
+import chai from 'chai';
+import chaiAsPromised from 'chai-as-promised';
+chai.use(chaiAsPromised);
 import { Crowdsale } from "../target/types/crowdsale";
 import { transferLamports, createMintAccount, mintTokens } from "./_helpers";
 
@@ -49,7 +52,7 @@ describe("Crowdsale", () => {
 
   let mintKeypair, crowdsaleTokenAccount, buyerTokenAccount;
 
-  before(async () => {
+  before("Set up",async () => {
     try {
 
       if (!creator.payer) {
@@ -75,14 +78,14 @@ describe("Crowdsale", () => {
         crowdsaleAuthorityPDA,
         true // Allow off-curve for PDA
       );
-      
+
       console.log('\n\tAccounts required for initialize():');
       console.log('\t\tcreator: ', creator.publicKey.toBase58());
       console.log('\t\tcrowdsalePDA: ', crowdsalePDA.toBase58());
       console.log('\t\tcrowdsaleAuthorityPDA: ', crowdsaleAuthorityPDA.toBase58());
       console.log('\t\tmintAccount: ', mintKeypair.publicKey.toBase58());
-      console.log('\t\ttokenAccount: ', tokenAccount.toBase58(),"\n");
-      
+      console.log('\t\ttokenAccount: ', tokenAccount.toBase58(), "\n");
+
       console.log('\n\tProgram Ids:');
       console.log('\t\ttokenProgram: ', TOKEN_PROGRAM_ID.toBase58());
       console.log('\t\tassociatedTokenProgram: ', ASSOCIATED_TOKEN_PROGRAM_ID.toBase58());
@@ -141,13 +144,112 @@ describe("Crowdsale", () => {
       const crowdsaleState = await program.account.crowdsale.fetch(crowdsalePDA);
       expect(crowdsaleState.id.toBase58()).to.equal(ID.toBase58());
       expect(crowdsaleState.cost).to.equal(COST);
-      expect(crowdsaleState.status).to.have.property('open');
+      expect(crowdsaleState.status).to.deep.equal({ open: {} });
     });
 
     it("Has tokens", async () => {
       const crowdsaleTokenBalance = await connection.getTokenAccountBalance(crowdsaleTokenAccount);
       expect(crowdsaleTokenBalance.value.amount).to.equal("1000000000000");
     });
+  });
+
+  describe("Buy Tokens", () => {
+    it("Buys tokens successfully", async () => {
+      const amount = 100_000_000; // 0.1 tokens (9 decimals)
+      const cost = amount * COST;
+
+      // Derive buyer ATA
+      const buyerATA = getAssociatedTokenAddressSync(mintKeypair.publicKey, buyerKeypair.publicKey);
+
+      // Call buyTokens
+      await program.methods
+        .buyTokens(amount)
+        .accounts({
+          buyer: buyerKeypair.publicKey,
+          buyerTokenAccount: buyerATA,
+          crowdsale: crowdsalePDA,
+          crowdsaleTokenAccount: crowdsaleTokenAccount,
+          crowdsaleAuthority: crowdsaleAuthorityPDA,
+          mintAccount: mintKeypair.publicKey,
+          ownerAccount: creator.publicKey,
+          tokenProgram: TOKEN_PROGRAM_ID,
+          associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID,
+          systemProgram: SystemProgram.programId,
+        })
+        .signers([buyerKeypair])
+        .rpc();
+
+      // Assert balances
+      const buyerBalance = await connection.getTokenAccountBalance(buyerATA);
+      expect(buyerBalance.value.amount).to.equal(amount.toString());
+      const vaultBalance = await connection.getTokenAccountBalance(crowdsaleTokenAccount);
+      expect(vaultBalance.value.amount).to.equal((1_000_000_000_000 - amount).toString());
+    });
+
+    it("Fails if amount is zero", async () => {
+
+
+      // Derive buyer ATA
+      const buyerATA = getAssociatedTokenAddressSync(mintKeypair.publicKey, buyerKeypair.publicKey);
+
+
+      await expect(program.methods.buyTokens(0)
+        .accounts({
+          buyer: buyerKeypair.publicKey,
+          buyerTokenAccount: buyerATA,
+          crowdsale: crowdsalePDA,
+          crowdsaleTokenAccount: crowdsaleTokenAccount,
+          crowdsaleAuthority: crowdsaleAuthorityPDA,
+          mintAccount: mintKeypair.publicKey,
+          ownerAccount: creator.publicKey,
+          tokenProgram: TOKEN_PROGRAM_ID,
+          associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID,
+          systemProgram: SystemProgram.programId,
+        })
+        .signers([buyerKeypair])
+        .rpc()).to.be.rejectedWith('InvalidAmount');
+    });
+  });
+
+  describe("Fund Withdrawal", () => {
+    it("Withdraws funds successfully", async () => {
+      // Close crowdsale (assume close instruction; or manually set for test)
+      await program.methods.closeCrowdsale().accounts({ crowdsale: crowdsalePDA }).rpc();
+
+      // Send extra SOL to crowdsale PDA for test
+      const airdropSignature = await connection.requestAirdrop(crowdsalePDA, 1_000_000);
+      const { blockhash, lastValidBlockHeight } = await connection.getLatestBlockhash();
+      await connection.confirmTransaction({
+        signature: airdropSignature,
+        blockhash,
+        lastValidBlockHeight,
+      });
+
+      const ownerBalanceBefore = await connection.getBalance(creator.publicKey);
+      await program.methods
+        .withdrawFunds()
+        .accounts({
+          owner: creator.publicKey,
+          crowdsale: crowdsalePDA,
+          systemProgram: SystemProgram.programId,
+        })
+        .signers([creator.payer])
+        .rpc();
+
+      const ownerBalanceAfter = await connection.getBalance(creator.publicKey);
+      expect(ownerBalanceAfter).to.be.above(ownerBalanceBefore);
+    });
+
+    it("Fails if not owner", async () => {
+      await expect(program.methods.withdrawFunds()
+        .accounts({
+          owner: buyerKeypair.publicKey,
+          crowdsale: crowdsalePDA,
+          systemProgram: SystemProgram.programId,
+        })
+        .signers([buyerKeypair]).rpc()).to.be.rejectedWith('Unauthorized');
+    });
+
   });
 
 });

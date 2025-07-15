@@ -1,58 +1,40 @@
-use {
-    anchor_lang::prelude::*,
-    anchor_lang::solana_program::rent::Rent,
-};
-
 use crate::{
-    errors::CrowdsaleError,
+    errors::CrowdsaleError, // Import for direct access (avoids crate:: prefix)
     state::{Crowdsale, CrowdsaleStatus},
 };
+use anchor_lang::prelude::*;
 
-/// Accounts for withdrawing funds from the crowdsale.
 #[derive(Accounts)]
 pub struct WithdrawFunds<'info> {
     #[account(mut)]
     pub owner: Signer<'info>,
-
     #[account(
         mut,
-        seeds = [
-            crowdsale.id.as_ref(),
-        ],
-        bump,
-        constraint = owner.key() == crowdsale.owner @ CrowdsaleError::Unauthorized,
-        constraint = crowdsale.status == CrowdsaleStatus::Closed @ CrowdsaleError::CrowdsaleNotClosed,
+        has_one = owner @ CrowdsaleError::Unauthorized,  // Enforce owner check
+        constraint = crowdsale.status == CrowdsaleStatus::Closed @ CrowdsaleError::CrowdsaleNotClosed  // Assuming status check
     )]
     pub crowdsale: Account<'info, Crowdsale>,
-
-    pub system_program: Program<'info, System>,
+    // No system_program needed
 }
 
 impl<'info> WithdrawFunds<'info> {
-    /// Handles withdrawing excess lamports from the crowdsale account to the owner.
     pub fn handler(ctx: Context<WithdrawFunds>) -> Result<()> {
-        let crowdsale_account = &ctx.accounts.crowdsale.to_account_info();
-        let owner_account = &ctx.accounts.owner.to_account_info();
+        let from = ctx.accounts.crowdsale.to_account_info();
+        let to = ctx.accounts.owner.to_account_info();
 
-        let rent = Rent::get()?.minimum_balance(8 + Crowdsale::MAXIMUM_SIZE);
-        let balance = crowdsale_account.lamports();
-        let withdrawable = balance.checked_sub(rent).ok_or(CrowdsaleError::InsufficientFunds)?;
+        // Calculate transferable amount (full balance minus rent-exempt minimum to avoid closing the account unintentionally)
+        let rent = Rent::get()?;
+        let min_balance = rent.minimum_balance(from.data_len());
+        let transferable = from
+            .lamports()
+            .checked_sub(min_balance)
+            .ok_or(CrowdsaleError::InsufficientFunds)?;
 
-        require!(withdrawable > 0, CrowdsaleError::NoFundsToWithdraw);
+        require_gt!(transferable, 0, CrowdsaleError::InsufficientFunds);
 
-        // Transfer excess lamports to owner via CPI
-        anchor_lang::system_program::transfer(
-            CpiContext::new(
-                ctx.accounts.system_program.to_account_info(),
-                anchor_lang::system_program::Transfer {
-                    from: crowdsale_account.clone(),
-                    to: owner_account.clone(),
-                },
-            ),
-            withdrawable,
-        )?;
-
-        msg!("Withdrew {} lamports to owner", withdrawable);
+        // Directly mutate lamports
+        **from.try_borrow_mut_lamports()? -= transferable;
+        **to.try_borrow_mut_lamports()? += transferable;
 
         Ok(())
     }
