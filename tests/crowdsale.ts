@@ -59,6 +59,11 @@ describe("Crowdsale", () => {
 
   before(async () => {
     try {
+
+       if (!creator.payer) {
+        throw new Error('Payer keypair is undefined - check wallet config');
+      }
+      
       // Create mint account
       mintKeypair = await createMintAccount({
         connection,
