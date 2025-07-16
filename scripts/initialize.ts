@@ -4,78 +4,85 @@
   by interacting with the deployed program.
 */
 
-// We include nocheck just to avoid 
-// conflicts and simplify the script
 // @ts-nocheck
 
-import * as anchor from "@coral-xyz/anchor"
-import { clusterApiUrl, Connection, PublicKey } from '@solana/web3.js'
+import * as anchor from "@coral-xyz/anchor";
+import { clusterApiUrl, Connection, PublicKey, SystemProgram } from '@solana/web3.js';
+import { getAssociatedTokenAddressSync, TOKEN_PROGRAM_ID, ASSOCIATED_TOKEN_PROGRAM_ID } from '@solana/spl-token';
 
-import IDL from "../target/idl/crowdsale.json"
-import { Crowdsale } from "../target/types/crowdsale"
+import IDL from "../target/idl/crowdsale.json";
+import { Crowdsale } from "../target/types/crowdsale";
 
 async function main() {
-  // Setup wallet, which is the  Solana key pair we set up ealier is our anchor wallet
-  // ANCHOR_WALLET = ~/.config/solana/id.json
-  const creator = anchor.Wallet.local()
+  // Setup wallet
+  const creator = anchor.Wallet.local();
 
   // Setup provider
   const provider = new anchor.AnchorProvider(
     new Connection(clusterApiUrl('devnet')),
     creator,
-    { preflightCommitment: "confirmed" } //make the Solana cluster wait until the transaction is confirmed
-  )
+    { preflightCommitment: "confirmed" }
+  );
 
-  anchor.setProvider(provider)
+  // Instantiate program explicitly
+  const CROWDSALE_PROGRAM_ID = new PublicKey("F4i513PaVxwz1UV3h5ShdXq3faMyAEaAezDGih1SEap4");
+  const program = new anchor.Program(IDL, CROWDSALE_PROGRAM_ID, provider);
+
+  console.log(program);
 
   // Create Crowdsale keypair
-  const crowdsaleKeypair = anchor.web3.Keypair.generate()
+  const crowdsaleKeypair = anchor.web3.Keypair.generate();
 
   // Crowdsale state
-  const ID = crowdsaleKeypair.publicKey
-  const COST = 1
+  const ID = crowdsaleKeypair.publicKey;
+  const COST = 1;
+  const TOKEN_MINT_ACCOUNT = new PublicKey("6rCYL7uxUhQFBYyCLFs7RVeZNzBfCa2UEvgQqpgF3iv5"); // Confirm this exists on devnet
 
-  const CROWDSALE_PROGRAM_ID = new PublicKey("HciPz9qoNEBBWga6KWomnDovANbQWnTAT5iFSNW7Ji3K")
-  // run terminal command to generate the actual
-  const TOKEN_MINT_ACCOUNT = new PublicKey("")
-
-  const program = anchor.workspace.Crowdsale as anchor.program<Crowdsale>
-
-  console.log(program)
-
-  // Generate the Crowdsale PDA (program derived address)
-  // special address controlled by the program, meaning only our program can sign for it.
-  // holds the state of our crowdsale
+  // Generate the Crowdsale PDA
   const crowdsalePDA = PublicKey.findProgramAddressSync(
     [ID.toBuffer()],
     CROWDSALE_PROGRAM_ID
   )[0];
 
-
   // Generate the Crowdsale authority PDA
-  // address to sign off on behalf of the crowdsale
   const crowdsaleAuthorityPDA = PublicKey.findProgramAddressSync(
     [ID.toBuffer(), Buffer.from("authority")],
     CROWDSALE_PROGRAM_ID
   )[0];
 
-  // Create the crowdsale
-  await program.methods.initialize(ID, COST).accounts({
-    crowdsale: crowdsalePDA,
-    mintAccount: TOKEN_MINT_ACCOUNT,
-    crowdsaleAuthority: crowdsaleAuthorityPDA,
-  }).signers([createBrotliCompress.payer]).rpc()
+  // Compute token account (vault ATA)
+  const tokenAccount = getAssociatedTokenAddressSync(
+    TOKEN_MINT_ACCOUNT,
+    crowdsaleAuthorityPDA,
+    true
+  );
 
-  // Get the state
-  const crowdsaleSate = await program.account.fetch(crowdsalePDA)
+  try {
+    // Create the crowdsale
+    await program.methods.initialize(ID, COST).accounts({
+      crowdsale: crowdsalePDA,
+      mintAccount: TOKEN_MINT_ACCOUNT,
+      tokenAccount: tokenAccount,
+      crowdsaleAuthority: crowdsaleAuthorityPDA,
+      creator: creator.publicKey,
+      tokenProgram: TOKEN_PROGRAM_ID,
+      associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID,
+      systemProgram: SystemProgram.programId,
+    }).signers([creator.payer]).rpc({ skipPreflight: false });
 
-  console.log(`Successfully initialized Crowdsale at ${crowdsalePDA}\n`)
-  console.log(`Crowdsale Authority ${crowdsaleAuthorityPDA}\n`)
-  console.log(`ID ${crowdsaleSate.id}\n`)
-  console.log(`COST ${crowdsaleSate.cost}\n`)
-  console.log(`TOKEN MINT ${crowdsaleSate.mintAccount}\n`)
-  console.log(`TOKEN ACCOUNT ${crowdsaleSate.tokenAccount}\n`)
+    // Get the state
+    const crowdsaleState = await program.account.crowdsale.fetch(crowdsalePDA);
 
+    console.log(`Successfully initialized Crowdsale at ${crowdsalePDA}\n`);
+    console.log(`Crowdsale Authority ${crowdsaleAuthorityPDA}\n`);
+    console.log(`ID ${crowdsaleState.id}\n`);
+    console.log(`COST ${crowdsaleState.cost}\n`);
+    console.log(`TOKEN MINT ${crowdsaleState.mintAccount}\n`);
+    console.log(`TOKEN ACCOUNT ${crowdsaleState.tokenAccount}\n`);
+  } catch (error) {
+    console.error('Error:', error);
+    if (error.logs) console.error('Logs:', error.logs);
+  }
 }
 
-main()
+main();

@@ -20,9 +20,27 @@ The structure is modular, with separate files for state, errors, constants, and 
 * `state.rs`: Crowdsale account and status enum.
 
 
+## Deploy Program to Blockchain - check existence
+* `anchor build && anchor deploy`
+* `solana program show <F4i513PaVxwz1UV3h5ShdXq3faMyAEaAezDGih1SEap4> --url devnet`
 
 
+## Generate mint account token - check existence
+* `spl-token create-token --url devnet`
+* `spl-token display 6rCYL7uxUhQFBYyCLFs7RVeZNzBfCa2UEvgQqpgF3iv5 --url devnet`
 
+
+```
+
+Program Id: F4i513PaVxwz1UV3h5ShdXq3faMyAEaAezDGih1SEap4
+Owner: BPFLoaderUpgradeab1e11111111111111111111111
+ProgramData Address: Ew1hMyDRLBwPfDHimkmE5aiESPez61JVouBNtUcvM7MN
+Authority: GX2iadvwHkL8nTG8NnM6HFrQjsrDCfGQrk5VuG3fePum
+Last Deployed In Slot: 394727605
+Data Length: 282664 (0x45028) bytes
+Balance: 1.96854552 SOL
+
+```
 
 ## Technology Stack & Tools
 - Typescript (Unit testing)
