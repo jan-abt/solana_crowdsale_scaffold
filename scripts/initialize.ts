@@ -25,8 +25,9 @@ async function main() {
   );
 
   // Instantiate program explicitly
-  const CROWDSALE_PROGRAM_ID = new PublicKey("F4i513PaVxwz1UV3h5ShdXq3faMyAEaAezDGih1SEap4");
-  const program = new anchor.Program(IDL, CROWDSALE_PROGRAM_ID, provider);
+  const CROWDSALE_PROGRAM_ID = new PublicKey("CBH9TrtBXphZkLchx1nvdjnsDY4VMYoMpiQ9Vw2MyefD");
+  //const program = new anchor.Program(IDL, CROWDSALE_PROGRAM_ID, provider);
+  const program = new anchor.Program(IDL, provider);
 
   console.log(program);
 
@@ -36,7 +37,7 @@ async function main() {
   // Crowdsale state
   const ID = crowdsaleKeypair.publicKey;
   const COST = 1;
-  const TOKEN_MINT_ACCOUNT = new PublicKey("6rCYL7uxUhQFBYyCLFs7RVeZNzBfCa2UEvgQqpgF3iv5"); // Confirm this exists on devnet
+  const TOKEN_MINT_ACCOUNT = new PublicKey("3s3D9a5mNjQpEG5SUx1Nmsre91viUfGECVVy1iruBV9U"); // Confirm this exists on devnet
 
   // Generate the Crowdsale PDA
   const crowdsalePDA = PublicKey.findProgramAddressSync(
@@ -59,16 +60,21 @@ async function main() {
 
   try {
     // Create the crowdsale
-    await program.methods.initialize(ID, COST).accounts({
-      crowdsale: crowdsalePDA,
-      mintAccount: TOKEN_MINT_ACCOUNT,
-      tokenAccount: tokenAccount,
-      crowdsaleAuthority: crowdsaleAuthorityPDA,
-      creator: creator.publicKey,
-      tokenProgram: TOKEN_PROGRAM_ID,
-      associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID,
-      systemProgram: SystemProgram.programId,
-    }).signers([creator.payer]).rpc({ skipPreflight: false });
+    const txSignature =
+      await program.methods.initialize(ID, COST).accounts({
+        crowdsale: crowdsalePDA,
+        mintAccount: TOKEN_MINT_ACCOUNT,
+        tokenAccount: tokenAccount,
+        crowdsaleAuthority: crowdsaleAuthorityPDA,
+        creator: creator.publicKey,
+        tokenProgram: TOKEN_PROGRAM_ID,
+        associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID,
+        systemProgram: SystemProgram.programId,
+      }).signers([creator.payer]).rpc({ skipPreflight: false });
+
+    // verify that the transaction has finished
+    await provider.connection.confirmTransaction(txSignature, "finalized");
+
 
     // Get the state
     const crowdsaleState = await program.account.crowdsale.fetch(crowdsalePDA);

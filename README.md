@@ -19,28 +19,66 @@ The structure is modular, with separate files for state, errors, constants, and 
 * `errors.rs`: Custom error enum.
 * `state.rs`: Crowdsale account and status enum.
 
+<br><br>
 
-## Deploy Program to Blockchain - check existence
-* `anchor build && anchor deploy`
-* `solana program show <F4i513PaVxwz1UV3h5ShdXq3faMyAEaAezDGih1SEap4> --url devnet`
+# Local Blockchain 
 
 
-## Generate mint account token - check existence
+Create a new program id by the following means:
+
+## Create a new anchor project (option a)
+1) Run `anchor init <name>` <br>
+   This scaffolds the project (with directories like programs/, tests/, Anchor.toml, etc.<br>
+  `<project-name>-keypair.json` is generated under the `target/deploy/`.<br>
+   The public key is added automatically to `declare_id!` macro in the program's `lib.rs` . <br>
+   Finally, `[programs.localnet]` in `Anchor.toml` is automatically updated.<br>
+
+## Manually re-create the Keypair (option b)
+1) Create new Keypair: `solana-keygen new -o target/deploy/crowdsale-keypair.json --force` <br>
+2) Read/Verify public address: `solana address -k target/deploy/crowdsale-keypair.json` <br>
+3) `declare_id!` macro. in `lib.rs`, as well as `[programs.localnet]`  in `Anchor.toml`need to be updated manually.
+4) Run `anchor build` This regenerates the IDL `<project-name>-keypair.json` under `target/deploy/` with the new id.
+
+
+## Run Tests
+* `anchor test --provider.cluster localnet`
+
+
+<br><br>
+
+# Solana Blockchain
+
+## Generate mint account token on devnet
 * `spl-token create-token --url devnet`
-* `spl-token display 6rCYL7uxUhQFBYyCLFs7RVeZNzBfCa2UEvgQqpgF3iv5 --url devnet`
+
+## Verify deployment
+* `spl-token display <mint_address> --url devnet`
 
 
-```
+## Fund your wallet if needed (for rent exemption)
+* Use a faucet like https://faucet.solana.com.
 
-Program Id: F4i513PaVxwz1UV3h5ShdXq3faMyAEaAezDGih1SEap4
-Owner: BPFLoaderUpgradeab1e11111111111111111111111
-ProgramData Address: Ew1hMyDRLBwPfDHimkmE5aiESPez61JVouBNtUcvM7MN
-Authority: GX2iadvwHkL8nTG8NnM6HFrQjsrDCfGQrk5VuG3fePum
-Last Deployed In Slot: 394727605
-Data Length: 282664 (0x45028) bytes
-Balance: 1.96854552 SOL
 
-```
+## Deploy program to the Solana blockchain
+
+Use `anchor deploy` to compile your Anchor program from the project root and upload/deploy the executable code to the Solana network <br>
+for example, `devnet` or `mainnet`, based on your `[provider.cluster]` setting in `Anchor.toml`.
+
+## Verify deployment
+* `solana program show <program-id> --url devnet`
+
+## Run program
+* `yarn ts-node scripts/initialize.ts`
+
+
+## Post-Initialization: Mint Tokens to the Vault
+* mint some tokens to the vault for sales: `spl-token mint <MINT_ADDRESS> 1000 <VAULT_ATA> --url devnet` <br>
+  Get `<VAULT_ATA>` from the script output or derive it: associated token account of the crowdsale authority PDA for your mint.
+
+
+<br><br>
+
+
 
 ## Technology Stack & Tools
 - Typescript (Unit testing)

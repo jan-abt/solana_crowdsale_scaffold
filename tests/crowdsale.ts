@@ -124,7 +124,7 @@ describe("Crowdsale", () => {
         connection,
         from: creator.payer, // Use payer
         to: buyerKeypair,
-        amount: 10_000_000_000, // 10 SOL
+        amount: 1_000_000_000, // 1 SOL
       });
     } catch (error) {
       if (error instanceof Error) { // Narrow to Error
@@ -217,7 +217,7 @@ describe("Crowdsale", () => {
       await program.methods.closeCrowdsale().accounts({ crowdsale: crowdsalePDA }).rpc();
 
       // Send extra SOL to crowdsale PDA for test
-      const airdropSignature = await connection.requestAirdrop(crowdsalePDA, 1_000_000);
+      const airdropSignature = await connection.requestAirdrop(crowdsalePDA, 10_000_000);
       const { blockhash, lastValidBlockHeight } = await connection.getLatestBlockhash();
       await connection.confirmTransaction({
         signature: airdropSignature,

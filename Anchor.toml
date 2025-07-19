@@ -5,10 +5,10 @@ resolution = true
 skip-lint = false
 
 [programs.devnet]
-crowdsale = "HciPz9qoNEBBWga6KWomnDovANbQWnTAT5iFSNW7Ji3K"
+crowdsale = "CBH9TrtBXphZkLchx1nvdjnsDY4VMYoMpiQ9Vw2MyefD"
 
 [programs.localnet]
-crowdsale = "HciPz9qoNEBBWga6KWomnDovANbQWnTAT5iFSNW7Ji3K"
+crowdsale = "CBH9TrtBXphZkLchx1nvdjnsDY4VMYoMpiQ9Vw2MyefD"
 
 [registry]
 url = "https://api.apr.dev"
@@ -19,3 +19,9 @@ wallet = "~/.config/solana/id.json"
 
 [scripts]
 test = "yarn run ts-mocha -p ./tsconfig.json -t 1000000 tests/**/*.ts"
+
+[test.validator]
+bind_address = "127.0.0.1"
+ledger = "test-ledger"
+rpc_port = 8899  # Or change if conflicted
+startup_wait = 10000  # Milliseconds

@@ -14,7 +14,7 @@ use instructions::close_crowdsale::*;
 use instructions::withdraw_funds::*;
 
 // Program ID
-declare_id!("F4i513PaVxwz1UV3h5ShdXq3faMyAEaAezDGih1SEap4");
+declare_id!("CBH9TrtBXphZkLchx1nvdjnsDY4VMYoMpiQ9Vw2MyefD");
 
 #[program]
 pub mod crowdsale {
