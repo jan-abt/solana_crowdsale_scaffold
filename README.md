@@ -71,10 +71,31 @@ for example, `devnet` or `mainnet`, based on your `[provider.cluster]` setting i
 * `yarn ts-node scripts/initialize.ts`
 
 
-## Post-Initialization: Mint Tokens to the Vault
-* mint some tokens to the vault for sales: `spl-token mint <MINT_ADDRESS> 1000 <VAULT_ATA> --url devnet` <br>
-  Get `<VAULT_ATA>` from the script output or derive it: associated token account of the crowdsale authority PDA for your mint.
+Should simmilar console output:
+```
+Successfully initialized Crowdsale at A47fAseLaHKfmm77U2zD587DXowscBvE6ZqsSfc18zhk
+Crowdsale Authority 7hBRVRpjxJXvF7MdzwEfU3yu7Y7UCYK58imhXqDQrWzq
+ID 6qVx93KngvS1jifoaF8GvbNnXQWD8zAEFYdVpcRgusDs
+COST 1
+TOKEN MINT 3s3D9a5mNjQpEG5SUx1Nmsre91viUfGECVVy1iruBV9U
+TOKEN ACCOUNT BqvohutKFC3rznzjBAMQSGM9A1UKkvfUKXYhmrJRy4hm
 
+```
+
+
+## Post-Initialization: Mint Tokens to the Vault
+* mint some tokens to the vault for sales: `spl-token mint <token_mint> 1000000000 <token_account> --url devnet` <br>
+  Get `<token_account>` from the script output
+
+Should simmilar console output:
+```
+Minting 1000000000 tokens
+  Token: 3s3D9a5mNjQpEG5SUx1Nmsre91viUfGECVVy1iruBV9U
+  Recipient: BqvohutKFC3rznzjBAMQSGM9A1UKkvfUKXYhmrJRy4hm
+
+Signature: 3TYhDkp9zthYDTwg9QNXPo33C9nf3D9p5Xz1oMvoSyTT4EALtsnvFjSMfPbZSt8dNHEBSbHUVGHeuczjSdVkRSzb
+
+```
 
 <br><br>
 

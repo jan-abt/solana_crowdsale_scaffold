@@ -79,9 +79,9 @@ async function main() {
     // Get the state
     const crowdsaleState = await program.account.crowdsale.fetch(crowdsalePDA);
 
-    console.log(`Successfully initialized Crowdsale at ${crowdsalePDA}\n`);
-    console.log(`Crowdsale Authority ${crowdsaleAuthorityPDA}\n`);
-    console.log(`ID ${crowdsaleState.id}\n`);
+    console.log(`Successfully initialized Crowdsale at PDA ${crowdsalePDA}\n`);
+    console.log(`Crowdsale Authority PDA ${crowdsaleAuthorityPDA}\n`);
+    console.log(`PROGRAM ID ${crowdsaleState.id}\n`);
     console.log(`COST ${crowdsaleState.cost}\n`);
     console.log(`TOKEN MINT ${crowdsaleState.mintAccount}\n`);
     console.log(`TOKEN ACCOUNT ${crowdsaleState.tokenAccount}\n`);
