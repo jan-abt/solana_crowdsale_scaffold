@@ -29,8 +29,8 @@ async function main() {
     const CROWDSALE_PROGRAM_ID = new PublicKey("CBH9TrtBXphZkLchx1nvdjnsDY4VMYoMpiQ9Vw2MyefD")
     const CROWDSALE_PDA = new PublicKey("A47fAseLaHKfmm77U2zD587DXowscBvE6ZqsSfc18zhk")
 
-    const program = new anchor.Program(IDL, provider);
-
+    const program = new anchor.Program(IDL as anchor.Idl, provider) as anchor.Program<Crowdsale>;
+    
     console.log(program);
 
     try {

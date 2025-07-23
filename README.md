@@ -101,18 +101,14 @@ Signature: 3TYhDkp9zthYDTwg9QNXPo33C9nf3D9p5Xz1oMvoSyTT4EALtsnvFjSMfPbZSt8dNHEBS
 
 
 
-## Technology Stack & Tools
-- Typescript (Unit testing)
-- [Rust](https://www.rust-lang.org/tools/install) (Language for Solana programs)
-- [Solana CLI (v1.18.22)](https://solana.com/docs/intro/installation) (Solana tools)
-- [Anchor CLI (v0.30.1)](https://www.anchor-lang.com/) (Solana development framework)
-- [Yarn (v4.4.1)](https://yarnpkg.com/getting-started/install) (Package manager)
-
-## Further Resources
-- [Anchor Documentation](https://www.anchor-lang.com/)
-- [Solana SPL Token Program](https://spl.solana.com/token)
-- [Solana Web3.js](https://solana-labs.github.io/solana-web3.js/)
-- [Solana Token Examples](https://solana.com/docs/programs/examples#tokens)
+## Technology Stack & Tools (run)
+```
+echo "\n--\nNode: $(node -v) \n
+NPM: $(npm -v)\n
+Anchor: $(anchor --version)\n
+Web3.js: $(npm list @solana/web3.js) \n
+SPL: $(npm list @solana/spl-token)\n--\n"
+```
 
 ## Prerequisites
 ### Rust
